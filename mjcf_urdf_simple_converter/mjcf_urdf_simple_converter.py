@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 from stl import mesh
 import os
+import shutil
 
 def array2str(arr):
     return " ".join([str(x) for x in arr])
@@ -54,7 +55,7 @@ def create_joint(xml_root, name, parent, child, pos, rpy, axis=None, jnt_range=N
     return jnt_element
 
 
-def convert(mjcf_file, urdf_file, asset_file_prefix=""):
+def convert(mjcf_file, urdf_file, asset_file_prefix="", output_dir=""):
     """
     load MJCF file, parse it in mujoco and save it as URDF
     replicate just the kinematic structure, ignore most dynamics, actuators, etc.
@@ -68,7 +69,6 @@ def convert(mjcf_file, urdf_file, asset_file_prefix=""):
     """
     assert mjcf_file.endswith(".xml"), f"{mjcf_file=} should end with .xml"
     assert urdf_file.endswith(".urdf"), f"{urdf_file=} should end with .urdf"
-    output_dir = os.path.dirname(urdf_file)
     assert os.path.exists(output_dir), f"{output_dir=} does not exist, please create it first"
     model = mujoco.MjModel.from_xml_path(mjcf_file)
     root = ET.Element('robot', {'name': "converted_robot"})
@@ -121,7 +121,7 @@ def convert(mjcf_file, urdf_file, asset_file_prefix=""):
             visual_element = ET.SubElement(body_element, 'visual', {'name': mesh_name})
             origin_element = ET.SubElement(visual_element, 'origin', {'xyz': array2str(geom_pos), 'rpy': array2str(geom_rpy)})
             geometry_element = ET.SubElement(visual_element, 'geometry')
-            mesh_element = ET.SubElement(geometry_element, 'mesh', {'filename': f"{asset_file_prefix}converted_{mesh_name}.stl"})
+            mesh_element = ET.SubElement(geometry_element, 'mesh', {'filename': f"{asset_file_prefix}{mesh_name}.stl"})
             material_element = ET.SubElement(visual_element, 'material', {'name': 'white'})
 
             # create STL
@@ -139,10 +139,19 @@ def convert(mjcf_file, urdf_file, asset_file_prefix=""):
             for i in range(facenum):
                 data['vectors'][i] = vert[face[i]]
             m = mesh.Mesh(data, remove_empty_areas=False)
-            mesh_save_path = os.path.join(output_dir, f"converted_{mesh_name}.stl")
+            mesh_save_path = os.path.join(output_dir, f"{mesh_name}.stl")
             m.save(mesh_save_path)
 
+        obj_src = os.path.join(asset_input_dir, f"{mesh_name}.obj")
+        if os.path.isfile(obj_src):
+            obj_dst = os.path.join(output_dir, f"{mesh_name}.obj")
+            shutil.copyfile(obj_src, obj_dst)
 
+        png_src = os.path.join(asset_input_dir, f"{mesh_name}_uv.png")
+        if os.path.isfile(png_src):
+            png_dst = os.path.join(output_dir, f"{mesh_name}_uv.png")
+            shutil.copyfile(png_src, png_dst)
+            
         jntnum = model.body_jntnum[id]
 
         if child_name == "world":
@@ -150,7 +159,6 @@ def convert(mjcf_file, urdf_file, asset_file_prefix=""):
             assert parent_name == "world"
             assert jntnum == 0
             continue  # skip adding joint element or parent body
-
         
         if jntnum == 0:
             # No joints, create a fixed joint directly to parent
