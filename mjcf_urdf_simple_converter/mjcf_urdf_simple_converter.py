@@ -55,7 +55,7 @@ def create_joint(xml_root, name, parent, child, pos, rpy, axis=None, jnt_range=N
     return jnt_element
 
 
-def convert(mjcf_file, urdf_file, asset_file_prefix="", output_dir=""):
+def convert(mjcf_file, urdf_file, asset_file_prefix=""):
     """
     load MJCF file, parse it in mujoco and save it as URDF
     replicate just the kinematic structure, ignore most dynamics, actuators, etc.
