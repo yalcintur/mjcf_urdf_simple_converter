@@ -67,11 +67,12 @@ def convert(mjcf_file, urdf_file, asset_file_prefix=""):
     :param urdf_file: path to URDF file which will be saved
     :param asset_file_prefix: prefix to add to the stl file names (e.g. package://my_package/meshes/)
     """
+
+    output_dir = os.path.dirname(urdf_file)
     assert mjcf_file.endswith(".xml"), f"{mjcf_file=} should end with .xml"
     assert urdf_file.endswith(".urdf"), f"{urdf_file=} should end with .urdf"
     assert os.path.exists(output_dir), f"{output_dir=} does not exist, please create it first"
 
-    output_dir = os.path.dirname(urdf_file)
     model = mujoco.MjModel.from_xml_path(mjcf_file)
     root = ET.Element('robot', {'name': "robot"})
     root.append(ET.Comment('generated with mjcf_urdf_simple_converter (https://github.com/Yasu31/mjcf_urdf_simple_converter)'))
