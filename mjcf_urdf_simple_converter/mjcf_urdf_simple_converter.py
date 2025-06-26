@@ -70,8 +70,10 @@ def convert(mjcf_file, urdf_file, asset_file_prefix="", output_dir=""):
     assert mjcf_file.endswith(".xml"), f"{mjcf_file=} should end with .xml"
     assert urdf_file.endswith(".urdf"), f"{urdf_file=} should end with .urdf"
     assert os.path.exists(output_dir), f"{output_dir=} does not exist, please create it first"
+
+    output_dir = os.path.dirname(urdf_file)
     model = mujoco.MjModel.from_xml_path(mjcf_file)
-    root = ET.Element('robot', {'name': "converted_robot"})
+    root = ET.Element('robot', {'name': "robot"})
     root.append(ET.Comment('generated with mjcf_urdf_simple_converter (https://github.com/Yasu31/mjcf_urdf_simple_converter)'))
 
     for id in range(model.nbody):
@@ -142,12 +144,12 @@ def convert(mjcf_file, urdf_file, asset_file_prefix="", output_dir=""):
             mesh_save_path = os.path.join(output_dir, f"{mesh_name}.stl")
             m.save(mesh_save_path)
 
-        obj_src = os.path.join(asset_input_dir, f"{mesh_name}.obj")
+        obj_src = os.path.join(asset_file_prefix, f"{mesh_name}.obj")
         if os.path.isfile(obj_src):
             obj_dst = os.path.join(output_dir, f"{mesh_name}.obj")
             shutil.copyfile(obj_src, obj_dst)
 
-        png_src = os.path.join(asset_input_dir, f"{mesh_name}_uv.png")
+        png_src = os.path.join(asset_file_prefix, f"{mesh_name}_uv.png")
         if os.path.isfile(png_src):
             png_dst = os.path.join(output_dir, f"{mesh_name}_uv.png")
             shutil.copyfile(png_src, png_dst)
